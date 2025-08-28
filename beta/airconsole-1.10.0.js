@@ -380,7 +380,7 @@ AirConsole.prototype.setImmersiveState = function (immersiveState) {
     return;
   }
 
-  if (immersiveState.light === undefined && immersiveState.experiment === undefined) {
+  if (immersiveState.light === undefined && immersiveState.climate === undefined && immersiveState.experiment === undefined) {
     return;
   }
 

@@ -1,5 +1,5 @@
 function testImmersive() {
-  it('Should call postMessage_ with the correct object', function () {
+  it('Should call postMessage_ with a valid light object', function () {
     var payload = { light: { r: 255, b: 188, g: 7 }};
     var expected_data = { light: { r: 255, b: 188, g: 7 }};
     var expected_params = { action: 'set', key: 'immersive', value: expected_data };
@@ -11,7 +11,19 @@ function testImmersive() {
     expect(AirConsole.postMessage_).toHaveBeenCalledWith(expected_params);
   });
 
-  it('Should call postMessage_ with the correct object for experimental features', function () {
+  it('Should call postMessage_ with a valid climate object', function () {
+    var payload = { climate: { fanSpeed: 30 }};
+    var expected_data = { climate: { fanSpeed: 30 }};
+    var expected_params = { action: 'set', key: 'immersive', value: expected_data };
+    airconsole.devices[0].location = LOCATION;
+    spyOn(AirConsole, 'postMessage_');
+
+    airconsole.setImmersiveState(payload);
+
+    expect(AirConsole.postMessage_).toHaveBeenCalledWith(expected_params);
+  });
+
+  it('Should call postMessage_ with a valid experiment payload', function () {
     var payload = { experiment: {"experimental-feature": "doSomething"}};
     var expected_data = { experiment: {"experimental-feature": "doSomething"}};
     var expected_params = { action: 'set', key: 'immersive', value: expected_data };
