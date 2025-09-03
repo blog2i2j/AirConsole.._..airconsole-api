@@ -304,6 +304,11 @@ AirConsole.prototype.setCustomDeviceStateProperty = function(key, value) {
 };
 
 /**
+ * @typedef {Object} ImmersiveClimateOption
+ * @property {number} fanSpeed - Speed of the fans. Format: integer between 0 and 100.
+ */
+
+/**
  * @typedef {Object} ImmersiveLightOption
  * @property {number} r - The red value of the light. Format: integer between 0 and 255.
  * @property {number} g - The green value of the light. Format: integer between 0 and 255.
@@ -313,6 +318,7 @@ AirConsole.prototype.setCustomDeviceStateProperty = function(key, value) {
 /**
  * @typedef {Object} ImmersiveOption
  * @property {ImmersiveLightOption} [light] - Light state inside the car.
+ * @property {ImmersiveClimateOption} [climate] - Climate state inside the car.
  * @property {any} [experiment] - Experimental payload for experimental APIs
  * */
 
@@ -331,7 +337,7 @@ AirConsole.prototype.setImmersiveState = function (immersiveState) {
     return;
   }
 
-  if (immersiveState.light === undefined && immersiveState.experiment === undefined) {
+  if (immersiveState.light === undefined && immersiveState.climate === undefined && immersiveState.experiment === undefined) {
     return;
   }
 
