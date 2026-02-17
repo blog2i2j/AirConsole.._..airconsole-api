@@ -1,7 +1,7 @@
 /**
  * AirConsole.
- * @copyright 2025 by N-Dream AG, Switzerland. All rights reserved.
- * @version 1.10.0
+ * @copyright 2026 by N-Dream AG, Switzerland. All rights reserved.
+ * @version 1.11.0
  *
  * IMPORTANT:
  * @see http://developers.airconsole.com/ for API documentation
@@ -1223,7 +1223,7 @@ AirConsole.prototype.getDefaultPlayerSilencing_ = function() {
 AirConsole.prototype.init_ = function(opts) {
   opts = opts || {};
   var me = this;
-  me.version = "1.10.0";
+  me.version = "1.11.0";
   me.devices = [];
   me.silencedUpdatesQueue_ = {};
   me.server_time_offset = opts.synchronize_time ? 0 : false;
