@@ -8,6 +8,17 @@ AirConsole
 
 Release notes follow the [keep a changelog](https://keepachangelog.com/en/1.0.0/) format.
 
+## [Unreleased]
+
+### Added
+
+## [1.10.0] - 2026-02-17
+
+### Added
+
+- Added support for haptics vibration patterns on the controller using the AirConsole.vibrate function.
+- Add rendering support for Unity Android games on Android Automotive.
+
 ## [1.9.0]
 
 With version 1.9.0, AirConsole adds a consistent system to handle situations where players can not join in the middle of
