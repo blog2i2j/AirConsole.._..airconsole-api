@@ -375,7 +375,7 @@ describe("AirConsole 1.10.0", function () {
         });
 
         testPlayerSilencing();
-    })
+    });
 
     describe("Android native support", () => {
         afterEach(function () {
@@ -383,5 +383,5 @@ describe("AirConsole 1.10.0", function () {
         });
 
         testAirConsole110Plus();
-    })
+    });
 });
