@@ -6,6 +6,8 @@ const { test, expect } = require('@playwright/test');
   "airconsole-1.7.0-spec.html",
   "airconsole-1.8.0-spec.html",
   "airconsole-1.9.0-spec.html",
+  "airconsole-1.10.0-spec.html",
+  "airconsole-1.11.0-spec.html",
 ].forEach((t) => {
   test(`Run Jasmine on ${t}`, async ({ page }) => {
     // Load the Jasmine runner HTML page
