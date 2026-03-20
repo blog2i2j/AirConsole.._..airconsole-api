@@ -766,7 +766,7 @@ AirConsole.prototype.getUserMedia = function getUserMedia(constraints) {
 
     // Send the request to the platform to decide where and how the user media request needs to take place based on
     //  browser or controller environment.
-    me.sendEvent_('request-media-permission', { constraints: constraints });
+    me.sendEvent_('requestUserMediaPermission', { constraints: constraints });
   });
 };
 
@@ -1453,11 +1453,6 @@ AirConsole.prototype.onPostMessage_ = function(event) {
             if (granted) {
               me.onUserMediaAccessGranted(sender);
             } else {
-              me._resolveMediaPermission_({
-                success: false,
-                reason: denial ? 'denied-permanent' : 'denied-temporary',
-                error: me.resolveMediaPermissionError_
-              });
               me.onUserMediaAccessDenied(sender, data.device_data.userMediaPermission.reason);
             }
           }
@@ -1562,23 +1557,30 @@ AirConsole.prototype.onPostMessage_ = function(event) {
     me.onSetSafeArea(data.gameSafeArea);
   } else if (data.action === 'event') {
     const { type } = data;
-    if (type === 'usermedia-permission-granted' || type === 'usermedia-permission-prompt') {
+    if (type === 'userMediaPermissionDenied') {
+      const { denial, error } = data.data;
+      me._resolveMediaPermission_({
+        success: false,
+        reason: denial ? 'permanent' : 'temporary',
+        error: me.resolveMediaPermissionError_
+      });
+    } else if (type === 'userMediaPermissionGranted' || type === 'promptUserMediaPermission') {
       const userPromptStartTime = performance.now();
       navigator.mediaDevices.getUserMedia(me.media_permission_constraints_).then(
         function success(stream) {
           me._resolveMediaPermission_({success: true, stream: stream});
-          me.sendEvent_('usermedia-permission-user-granted', {});
+          me.sendEvent_('userMediaPermissionGranted', {});
         },
         function failure(err) {
           // Native controller
-          if (type === 'usermedia-permission-granted') {
+          if (type === 'userMediaPermissionGranted') {
             me._resolveMediaPermission_({success: false, error: err});
-          } else if (type === 'usermedia-permission-prompt') {
+          } else if (type === 'promptUserMediaPermission') {
             me.resolveMediaPermissionError_ = err;
             // web based controller
             const userPromptDuration = performance.now() - userPromptStartTime;
             if (err.name === 'NotAllowedError') {
-              me.sendEvent_('usermedia-permission-user-denied', {userPromptDuration});
+              me.sendEvent_('userMediaPermissionDenied', {userPromptDuration});
             }
           }
         }
@@ -1664,7 +1666,7 @@ AirConsole.prototype.set_ = function(key, value) {
  * @private
  */
 AirConsole.prototype.sendEvent_ = function(eventType, eventData) {
-  AirConsole.postMessage_({ action: 'event', type: eventType, data: eventData });
+  AirConsole.postMessage_({ action: 'event', name: eventType, data: eventData });
 };
 
 /**
