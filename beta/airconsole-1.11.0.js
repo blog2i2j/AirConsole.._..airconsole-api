@@ -132,6 +132,14 @@ AirConsole.VIBRATE = {
   }
 };
 
+/**
+ * TODO
+ */
+AirConsole.MEDIA_PERMISSION_DENIED = {
+  temporary: "temporary",
+  permanent: "permanent",
+};
+
 /** ------------------------------------------------------------------------ *
  * @chapter                     CONNECTIVITY                                 *
  * @see         http://developers.airconsole.com/#!/guides/pong              *
@@ -1449,11 +1457,11 @@ AirConsole.prototype.onPostMessage_ = function(event) {
         }
         if (data.device_data._is_userMediaPermission_update) {
           if (!!data.device_data.userMediaPermission) {
-            const { granted, denial, error } = data.device_data.userMediaPermission;
+            const { granted, reason } = data.device_data.userMediaPermission;
             if (granted) {
               me.onUserMediaAccessGranted(sender);
             } else {
-              me.onUserMediaAccessDenied(sender, data.device_data.userMediaPermission.reason);
+              me.onUserMediaAccessDenied(sender, reason);
             }
           }
         }
@@ -1557,30 +1565,33 @@ AirConsole.prototype.onPostMessage_ = function(event) {
     me.onSetSafeArea(data.gameSafeArea);
   } else if (data.action === 'event') {
     const { type } = data;
+
     if (type === 'userMediaPermissionDenied') {
-      const { denial, error } = data.data;
+      const reason = data.data?.reason;
+
       me._resolveMediaPermission_({
         success: false,
-        reason: denial ? 'permanent' : 'temporary',
+        reason,
         error: me.resolveMediaPermissionError_
       });
     } else if (type === 'userMediaPermissionGranted' || type === 'promptUserMediaPermission') {
       const userPromptStartTime = performance.now();
+
       navigator.mediaDevices.getUserMedia(me.media_permission_constraints_).then(
         function success(stream) {
-          me._resolveMediaPermission_({success: true, stream: stream});
+          me._resolveMediaPermission_({ success: true, stream: stream });
           me.sendEvent_('userMediaPermissionGranted', {});
         },
-        function failure(err) {
+        function failure(error) {
           // Native controller
           if (type === 'userMediaPermissionGranted') {
-            me._resolveMediaPermission_({success: false, error: err});
+            me._resolveMediaPermission_({ success: false, error });
           } else if (type === 'promptUserMediaPermission') {
-            me.resolveMediaPermissionError_ = err;
-            // web based controller
+            me.resolveMediaPermissionError_ = error;
+            // Web based controller
             const userPromptDuration = performance.now() - userPromptStartTime;
-            if (err.name === 'NotAllowedError') {
-              me.sendEvent_('userMediaPermissionDenied', {userPromptDuration});
+            if (error.name === 'NotAllowedError') {
+              me.sendEvent_('userMediaPermissionDenied', { userPromptDuration });
             }
           }
         }
@@ -1666,7 +1677,7 @@ AirConsole.prototype.set_ = function(key, value) {
  * @private
  */
 AirConsole.prototype.sendEvent_ = function(eventType, eventData) {
-  AirConsole.postMessage_({ action: 'event', name: eventType, data: eventData });
+  AirConsole.postMessage_({ action: 'event', type: eventType, data: eventData });
 };
 
 /**
