@@ -133,7 +133,18 @@ AirConsole.VIBRATE = {
 };
 
 /**
- * TODO
+ * Possible reasons for media permission denial when calling AirConsole.getUserMedia().
+ * 
+ * When a user denies access to audio/video media streams, the promise rejects with
+ * a response containing an additional `reason` field indicating whether the denial is temporary
+ * (getUserMedia can be requested again without user action to change security settings) or permanent (user must first
+ * change permissions in the browser or for the application).
+ * 
+ * @typedef {Object} AirConsole.MEDIA_PERMISSION_DENIED
+ * @property {string} temporary - User temporarily denied permission.
+ * @property {string} permanent - User permanently denied permission.
+ *
+ * @see AirConsole.prototype.getUserMedia
  */
 AirConsole.MEDIA_PERMISSION_DENIED = {
   temporary: "temporary",
@@ -705,30 +716,28 @@ AirConsole.prototype.vibrate = function(options) {
  * ------------------------------------------------------------------------- */
 
 /**
- * Gets called on the game screen when a controller is granted user media
- * access as a result of calling getUserMedia on that controller.
+ * Gets called on all other devices in the game as a result of to a successful request to getUserMedia on the specific
+ *  device with device_id.
+ * On the requesting device, the getUserMedia promise will provide the result immediately.
  * @abstract
  * @param {number} device_id - The device_id of the controller that was granted access.
+ * 
+ * @see AirConsole.prototype.getUserMedia
+ * @see AirConsole.prototype.onUserMediaAccessDenied
  */
 AirConsole.prototype.onUserMediaAccessGranted = function(device_id) {};
 
 /**
- * @typedef {string} AirConsole~MicDenialReason
- * @enum {string}
- * @property {string} DENIED_BY_USER - The user denied the permission request.
- * @property {string} NOT_SUPPORTED - The browser does not support the requested media type.
- * @property {string} AIRCONSOLE_NOT_READY - The controller called getUserMedia before onReady was called or after the device got disconnected.
- * @property {string} REQUEST_PENDING - The controller called getUserMedia while another getUserMedia request is still pending.
- * @property {string} INVALID_CONSTRAINTS - The controller called getUserMedia with invalid constraints (e.g. no audio or video constraint specified).
- * @property {string} TIMEOUT - The user did not respond to the permission request in time.
- */
-
-/**
- * Gets called on the game screen when user media access is denied or
- * subsequently lost for a controller that called getUserMedia.
+ * Gets called on all other devices in the game as a result of to a denied request to getUserMedia on the specific
+ *  device with device_id.
+ * On the requesting device, the getUserMedia promise will provide the result immediately.
  * @abstract
  * @param {number} device_id - The device_id of the controller.
- * @param {AirConsole~MicDenialReason} reason - The reason for denial or loss.
+ * @param {string} reason - The reason for denial. One of the values from AirConsole.MEDIA_PERMISSION_DENIED.
+ * 
+ * @see AirConsole.MEDIA_PERMISSION_DENIED
+ * @see AirConsole.prototype.getUserMedia
+ * @see AirConsole.prototype.onUserMediaAccessGranted
  */
 AirConsole.prototype.onUserMediaAccessDenied = function(device_id, reason) {};
 
@@ -742,9 +751,30 @@ AirConsole.prototype.onUserMediaAccessDenied = function(device_id, reason) {};
 /**
  * Requests media permissions (e.g. microphone) for the controller.
  * Can only be called by a controller (not the screen).
- * @param {Object.<AirConsole~GetUserMediaConstraint>} constraints - User Media Request constraints
+ * @param {Object.<AirConsole~GetUserMediaConstraint>} constraints - User Media Request constraints.
  *   Currently only 'audio' is supported.
- * @return {Promise.<{success: boolean, stream: MediaStream=, error: Error=}>}
+ * @return {Promise.<{success: boolean, stream: MediaStream=, reason: string=, error: Error=}>}
+ *   On success: {success: true, stream: <MediaStream>}
+ *   On permission denied: {success: false, reason: <string from AirConsole.MEDIA_PERMISSION_DENIED>}
+ *   On error: {success: false, error: <Error>}
+ * 
+ * @example
+ * airconsole.getUserMedia({ audio: true }).then(function(result) {
+ *   if (result.success) {
+ *     console.log('Media access granted', result.stream);
+ *   } else if (result.reason === AirConsole.MEDIA_PERMISSION_DENIED.temporary) {
+ *     console.log('User temporarily denied media access');
+ *     // Try requesting media access again later, e.g. after a user interaction
+ *   } else if (result.reason === AirConsole.MEDIA_PERMISSION_DENIED.permanent) {
+ *     console.log('User permanently denied media access');
+ *   } else if (result.error) {
+ *     console.error('Error requesting media access:', result.error);
+ *   }
+ * });
+ * 
+ * @see AirConsole.MEDIA_PERMISSION_DENIED
+ * @see AirConsole.prototype.onUserMediaAccessGranted
+ * @see AirConsole.prototype.onUserMediaAccessDenied
  */
 AirConsole.prototype.getUserMedia = function getUserMedia(constraints) {
   var me = this;
