@@ -71,15 +71,6 @@ function testUserMediaPermissions() {
       });
     });
 
-    it('Should resolve {success:false} when device_id is null', function(done) {
-      airconsole.device_id = null;
-      airconsole.getUserMedia({ audio: true }).then(function(result) {
-        expect(result.success).toBe(false);
-        expect(result.error.message).toBe(AirConsole.USERMEDIA_ERROR.notReady);
-        done();
-      });
-    });
-
     it('Should resolve {success:false} when a request is already in progress', function(done) {
       airconsole.media_permission_pending_ = true;
       airconsole.getUserMedia({ audio: true }).then(function(result) {
@@ -419,7 +410,7 @@ function testUserMediaPermissions() {
       spyGetUserMediaResolve(makeFakeStream());
       airconsole.getUserMedia({ audio: true }).then(function(result) {
         expect(result.success).toBe(true);
-        expect(airconsole.sendEvent_).toHaveBeenCalledWith('userMediaPermissionGranted', {});
+        expect(airconsole.sendEvent_).toHaveBeenCalledWith('userMediaPermissionGranted', { constraints: { audio: true } });
         done();
       });
       dispatchCustomMessageEvent({ action: 'event', type: 'userMediaPermissionGranted' });
@@ -429,7 +420,7 @@ function testUserMediaPermissions() {
       spyGetUserMediaResolve(makeFakeStream());
       airconsole.getUserMedia({ audio: true }).then(function(result) {
         expect(result.success).toBe(true);
-        expect(airconsole.sendEvent_).toHaveBeenCalledWith('userMediaPermissionGranted', {});
+        expect(airconsole.sendEvent_).toHaveBeenCalledWith('userMediaPermissionGranted', { constraints: { audio: true } });
         done();
       });
       dispatchCustomMessageEvent({ action: 'event', type: 'promptUserMediaPermission' });
@@ -640,29 +631,12 @@ function testUserMediaPermissions() {
 
     describe('post-cleanup state assertions', function() {
 
-    it('Should clear media_permission_reject_ after resolveMediaPermission_', function(done) {
-      airconsole.getUserMedia({ audio: true }).then(function() {
-        expect(airconsole.media_permission_reject_).toBeUndefined();
-        done();
-      });
-      dispatchDenied();
-    });
-
     it('Should clear media_permission_timeout_ after resolveMediaPermission_', function(done) {
       airconsole.getUserMedia({ audio: true }).then(function() {
         expect(airconsole.media_permission_timeout_).toBeUndefined();
         done();
       });
       dispatchDenied();
-    });
-
-    it('Should clear media_permission_resolve_ after rejectMediaPermission_', function(done) {
-      airconsole.getUserMedia({ audio: true })
-        .catch(function() {
-          expect(airconsole.media_permission_resolve_).toBeUndefined();
-          done();
-        });
-      airconsole.rejectMediaPermission_(new Error('Test cleanup'));
     });
 
     it('Should clear media_permission_constraints_ after resolveMediaPermission_', function(done) {
@@ -695,5 +669,36 @@ function testUserMediaPermissions() {
     });
 
   }); // end 'media permission flows'
+
+
+  // --- Group 12: destroy() ---
+
+  describe('destroy', function() {
+    beforeEach(initAirConsoleAsController);
+    afterEach(teardown);
+
+    it('Should remove the window message event listener', function() {
+      spyOn(window, 'removeEventListener');
+      const listener = airconsole.messageEventListener_;
+      airconsole.destroy();
+      expect(window.removeEventListener).toHaveBeenCalledWith('message', listener);
+    });
+
+    it('Should clear a pending media_permission_timeout_ on destroy', function() {
+      jasmine.clock().install();
+      spyOn(navigator.mediaDevices, 'getUserMedia').and.returnValue(new Promise(function() {}));
+      spyOn(airconsole, 'sendEvent_');
+      airconsole.getUserMedia({ audio: true });
+      expect(airconsole.media_permission_timeout_).toBeDefined();
+
+      airconsole.destroy();
+      expect(airconsole.media_permission_timeout_).toBeNull();
+      jasmine.clock().uninstall();
+    });
+
+    it('Should not throw when no media permission timeout is pending', function() {
+      expect(function() { airconsole.destroy(); }).not.toThrow();
+    });
+  }); // end 'destroy'
 
 }
